@@ -5,10 +5,12 @@ import {
   FormControl,
   FormLabel,
   FormControlLabel,
+  TextField,
+  Button,
 } from "@mui/material";
 
-import { COORDINATES, LocationCoordinate } from "./assets/constatns";
-import tempData from "./assets/example.json";
+import { COORDINATES } from "./assets/constatns";
+import tempData from "./assets/example.json"; // for testing without the API
 
 import "./App.css";
 import LocationList from "./components/LocationList";
@@ -20,20 +22,19 @@ import axios from "axios";
 function App() {
   const [selectedLocationIndex, setSelectedLocationIndex] = useState(0);
   const [locationsResponse, setLocationsResponse] = useState([]);
+  const [searchKeywords, setSearchKeywords] = useState("");
 
   const getLocations = useCallback(
-    (coordinates: [number, number]) => {
+    (coordinates: [number, number], keywords?: string) => {
       const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${
         coordinates[0]
-      }%2C${coordinates[1]}&radius=1500&key=${
-        import.meta.env.VITE_NEARBY_SEARCH_KEY
-      }`;
+      }%2C${coordinates[1]}&radius=1500${
+        keywords ? "&keyword=" + keywords : ""
+      }&key=${import.meta.env.VITE_NEARBY_SEARCH_KEY}`;
       axios
         .get(url)
         .then((response) => {
           setLocationsResponse(response.data.results);
-          // console.log("response", JSON.stringify(response.data));
-          console.log("response", response.data.results);
         })
         .catch((error) => {
           console.error("error while fetching data: ", error);
@@ -46,8 +47,6 @@ function App() {
     getLocations(COORDINATES[selectedLocationIndex].coordinates);
   }, [COORDINATES]);
 
-  // console.log("env", import.meta.env.VITE_NEARBY_SEARCH_KEY);
-
   const onLocationChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
       getLocations(COORDINATES[value].coordinates);
@@ -55,6 +54,15 @@ function App() {
     },
     [setSelectedLocationIndex]
   );
+
+  const onUpdateKeywords = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    value: string
+  ) => {
+    const keywords = event.target.value;
+    getLocations(COORDINATES[selectedLocationIndex].coordinates, keywords);
+    setSearchKeywords(keywords);
+  };
 
   const destinationList = useCallback(() => {
     const result: React.ReactElement[] = [];
@@ -78,18 +86,22 @@ function App() {
         >
           {result}
         </RadioGroup>
+        <TextField
+          onChange={onUpdateKeywords}
+          defaultValue={searchKeywords}
+          label="Filter Results"
+        />
       </FormControl>
     );
   }, [COORDINATES]);
 
-  console.log("index", selectedLocationIndex);
   return (
     <div className="App">
       <Grid container spacing={2} justifyContent="center">
-        <div>{/* <Autocomplete></Autocomplete> */}</div>
         <Grid xs={6}>{destinationList()}</Grid>
         <Grid xs={6}>
           <h3>{`Showing Results for ${COORDINATES[selectedLocationIndex].name}`}</h3>
+          <Button />
           <LocationList locations={locationsResponse as Location[]} />
         </Grid>
       </Grid>
