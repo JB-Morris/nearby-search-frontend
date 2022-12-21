@@ -26,6 +26,7 @@ function App() {
 
   const getLocations = useCallback(
     (coordinates: [number, number], keywords?: string) => {
+      // Admittedly, I'm sure this isn't the right way to do this but I'm new to using axios out of the box and don't want to waste too much of my time on learning it during this exercise.
       const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${
         coordinates[0]
       }%2C${coordinates[1]}&radius=1500${
@@ -52,17 +53,18 @@ function App() {
       getLocations(COORDINATES[value].coordinates);
       setSelectedLocationIndex(value);
     },
-    [setSelectedLocationIndex]
+    [COORDINATES, setSelectedLocationIndex]
   );
 
-  const onUpdateKeywords = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    value: string
-  ) => {
-    const keywords = event.target.value;
-    getLocations(COORDINATES[selectedLocationIndex].coordinates, keywords);
-    setSearchKeywords(keywords);
-  };
+  const onUpdateKeywords = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+      // TODO add some sort of validation to prevent injection of query params and the like
+      const keywords = event.target.value;
+      getLocations(COORDINATES[selectedLocationIndex].coordinates, keywords);
+      setSearchKeywords(keywords);
+    },
+    [COORDINATES, setSearchKeywords]
+  );
 
   const destinationList = useCallback(() => {
     const result: React.ReactElement[] = [];
